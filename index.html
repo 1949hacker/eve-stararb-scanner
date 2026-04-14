@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
+  <title>EVE 星域套利扫描器 | EVE StarArb Scanner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e15;
+      --panel: #121a24;
+      --border: #253c54;
+      --accent: #3d7eb9;
+      --accent-light: #5a9bd6;
+      --text-primary: #e8edf5;
+      --text-secondary: #a0b8d0;
+      --text-dim: #5a7895;
+      --gold: #d4a93f;
+      --green-mint: #4caf9e;
+      --red-warning: #d96b6b;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      padding: 16px;
+      max-width: 1920px;
+      margin: 0 auto;
+    }
+    
+    .lang-switch {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .lang-btn {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+      margin-left: 8px;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent-light);
+    }
+    
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    
+    .phdr {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      border-left: 4px solid var(--accent);
+      padding-left: 16px;
+      text-transform: uppercase;
+    }
+    
+    .igrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px 18px;
+    }
+    
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .flabel {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+    }
+    
+    input[type="number"], select, input[type="text"] {
+      background: #0d131e;
+      border: 1.5px solid #1f2c3e;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: border 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(61, 126, 185, 0.25);
+      outline: none;
+    }
+    
+    .btn {
+      padding: 11px 22px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #1a2535;
+      color: var(--text-secondary);
+      border: 1px solid #2e405b;
+      transition: all 0.18s;
+      font-family: var(--font-sans);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .btn-p {
+      background: var(--accent);
+      border-color: var(--accent-light);
+      color: white;
+      box-shadow: 0 4px 12px rgba(61,126,185,0.25);
+    }
+    
+    .btn-p:hover {
+      background: #4a8bc2;
+      transform: translateY(-1px);
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    
+    .slbl {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    
+    .sval {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #eef2fb;
+      font-family: var(--font-mono);
+    }
+    
+    .progress-bar-bg {
+      height: 8px;
+      background: #0f1a26;
+      border-radius: 20px;
+      border: 1px solid #253c54;
+      overflow: hidden;
+    }
+    
+    #pgfill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #7ab3e0);
+      border-radius: 20px;
+      transition: width 0.3s ease;
+    }
+    
+    .lgbox {
+      margin-top: 16px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: #0c121c;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #1f3142;
+    }
+    
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 8px;
+      border-radius: 14px;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      min-width: 1500px;
+      white-space: nowrap;
+    }
+    
+    th {
+      background: #101a26;
+      padding: 14px 6px;
+      text-align: center;
+      color: var(--accent-light);
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid #2a4560;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    th:hover {
+      background: #162433;
+      color: white;
+    }
+    
+    td {
+      padding: 10px 6px;
+      text-align: right;
+      border-bottom: 1px solid #1e2f42;
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+    
+    td:first-child, th:first-child { padding-left: 10px; }
+    td:last-child, th:last-child { padding-right: 10px; }
+    
+    tr:hover td {
+      background: rgba(61, 126, 185, 0.06);
+    }
+    
+    .item-name {
+      color: var(--gold);
+      font-weight: 700;
+      text-align: left;
+    }
+    
+    .location-tag {
+      cursor: pointer;
+      padding: 4px 10px;
+      background: #14202e;
+      border: 1px solid #2a4560;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: #b8d4f0;
+      transition: all 0.15s;
+      display: inline-block;
+      text-align: center;
+    }
+    
+    .location-tag:hover {
+      background: var(--accent);
+      color: white;
+    }
+    
+    /* 统一的风险标签样式 - 全部圆角矩形 */
+    .risk-safe {
+      background: #1a4a3a;
+      color: #8ed5c0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: inline-block;
+    }
+    
+    .risk-caution {
+      background: #5e4a23;
+      color: #f5d371;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: inline-block;
+    }
+    
+    .risk-danger {
+      background: #6b2a2a;
+      color: #ffa4a4;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: inline-block;
+    }
+    
+    .profit-positive { color: var(--green-mint); font-weight: 700; }
+    
+    .tooltip-info {
+      border-bottom: 1px dashed var(--text-dim);
+      cursor: help;
+    }
+    
+    .custom-regions {
+      margin-top: 16px;
+      padding: 14px;
+      background: #0d131e;
+      border-radius: 14px;
+      border: 1px dashed #2a4560;
+    }
+    
+    .limit-indicator {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      margin-left: 4px;
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 8px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .btn { padding: 10px 14px; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 语言切换 -->
+<div class="lang-switch">
+  <button class="lang-btn active" onclick="setLanguage('zh')">中文</button>
+  <button class="lang-btn" onclick="setLanguage('en')">English</button>
+</div>
+
+<!-- 参数配置 -->
+<div class="panel">
+  <div class="phdr" id="param-header">⚙️ 参数配置</div>
+  
+  <!-- 星域范围 -->
+  <div style="margin-bottom: 20px;">
+    <div class="flabel" id="scope-label">🌌 星域范围</div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <select id="scopeSelect" style="width: auto; min-width: 220px;" onchange="toggleCustomInput()">
+        <option value="core" id="scope-core">五大星域 (Jita, Amarr, Dodixie, Rens, Hek)</option>
+        <option value="extended" id="scope-extended">五大星域 + 周边星域</option>
+        <option value="custom" id="scope-custom">完全自定义</option>
+      </select>
+      <span style="color: var(--text-dim); font-size: 0.75rem;" id="regionCount">5个星域</span>
+    </div>
+    <div id="customRegionsBox" class="custom-regions" style="display: none;">
+      <div class="flabel" id="custom-label">📝 输入星域ID (逗号分隔)</div>
+      <input type="text" id="customRegionIds" placeholder="10000002,10000043,10000032" value="10000002,10000043,10000032,10000030,10000042">
+      <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 6px;" id="custom-hint">常用: The Forge=10000002, Domain=10000043, Sinq Laison=10000032</div>
+    </div>
+  </div>
+
+  <div class="igrid">
+    <div class="field"><div class="flabel" id="lbl-capital">本金 (ISK)</div><input id="capital" type="number" value="1200000000" step="100000000"></div>
+    <div class="field"><div class="flabel" id="lbl-cargo">货舱容积 (m³)</div><input id="cargo" type="number" value="10000" step="100"></div>
+    <div class="field"><div class="flabel" id="lbl-tax">交易税 (%)</div><input id="tax" type="number" value="8" step="0.1"></div>
+    <div class="field"><div class="flabel" id="lbl-minSell">卖单最少件数</div><input id="minSell" type="number" value="5" step="1"></div>
+    <div class="field"><div class="flabel" id="lbl-minBuy">买单最少件数</div><input id="minBuy" type="number" value="5" step="1"></div>
+    <div class="field"><div class="flabel" id="lbl-maxVol">单件最大体积 (m³)</div><input id="maxvol" type="number" value="100" step="1"></div>
+    <div class="field"><div class="flabel" id="lbl-minProfit">最低净利/件 (M)</div><input id="minprofit" type="number" value="0" step="0.1"></div>
+  </div>
+
+  <div style="margin-top: 24px; display: flex; gap: 14px; flex-wrap: wrap;">
+    <button class="btn btn-p" id="scan-btn" onclick="startScan()">▶ 开始扫描</button>
+    <button class="btn" onclick="exportCSV()">⬇ 导出 CSV</button>
+  </div>
+</div>
+
+<!-- 统计卡 -->
+<div class="stats">
+  <div class="stat"><div class="slbl" id="stat-types">物品种类</div><div class="sval" id="sv-types">—</div></div>
+  <div class="stat"><div class="slbl" id="stat-opps">套利机会</div><div class="sval" id="sv-opps">—</div></div>
+  <div class="stat"><div class="slbl" id="stat-best">最佳利润</div><div class="sval" id="sv-best" style="color: var(--green-mint);">—</div></div>
+  <div class="stat"><div class="slbl" id="stat-time">耗时</div><div class="sval" id="sv-time">—</div></div>
+</div>
+
+<!-- 进度面板 -->
+<div class="panel pgwrap" id="pgwrap" style="display: none;">
+  <div class="phdr" id="progress-header">📡 扫描进度</div>
+  <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+    <div id="pgmsg" style="color: var(--accent-light);">正在获取市场数据...</div>
+    <div id="pgpct" style="font-family: var(--font-mono);">0%</div>
+  </div>
+  <div class="progress-bar-bg"><div id="pgfill"></div></div>
+  <div id="lgbox" class="lgbox"></div>
+</div>
+
+<!-- 结果表格 -->
+<div class="panel">
+  <div class="phdr">
+    <span id="result-header">📋 扫描结果</span>
+    <span style="margin-left: 16px; font-size: 0.7rem; font-weight: 400; color: var(--text-dim);" id="result-hint">点击列标题排序 | 商品名固定英文 | 结果星系星域全英文</span>
+  </div>
+  <div class="table-wrapper" id="twrap">
+    <div style="text-align: center; padding: 60px; color: var(--text-dim);" id="table-placeholder">就绪，点击扫描开始</div>
+  </div>
+</div>
+
+<footer style="text-align: center; margin-top: 24px; color: var(--text-dim); font-size: 0.75rem;">
+  EVE Online Arbitrage Scanner · ESI + zKillboard · 运输风险 = 路线星系1h内玩家舰船击毁总数 · 单趟件数受库存/容量/本金限制
+</footer>
+
+<script>
+  (function(){
+    "use strict";
+
+    let currentLang = 'zh';
+    
+    const i18n = {
+      zh: {
+        paramHeader: '⚙️ 参数配置',
+        scopeLabel: '🌌 星域范围',
+        scopeCore: '五大星域 (Jita, Amarr, Dodixie, Rens, Hek)',
+        scopeExtended: '五大星域 + 周边星域',
+        scopeCustom: '完全自定义',
+        customLabel: '📝 输入星域ID (逗号分隔)',
+        customHint: '常用: The Forge=10000002, Domain=10000043, Sinq Laison=10000032',
+        capital: '本金 (ISK)',
+        cargo: '货舱容积 (m³)',
+        tax: '交易税 (%)',
+        minSell: '卖单最少件数',
+        minBuy: '买单最少件数',
+        maxVol: '单件最大体积 (m³)',
+        minProfit: '最低净利/件 (M)',
+        scanBtn: '▶ 开始扫描',
+        exportBtn: '⬇ 导出 CSV',
+        statTypes: '物品种类',
+        statOpps: '套利机会',
+        statBest: '最佳利润',
+        statTime: '耗时',
+        progressHeader: '📡 扫描进度',
+        resultHeader: '📋 扫描结果',
+        resultHint: '点击列标题排序 | 商品名固定英文 | 结果星系星域全英文',
+        tablePlaceholder: '就绪，点击扫描开始',
+        colRank: '#',
+        colItem: '物品',
+        colVol: '体积(m³)',
+        colBuyFrom: '进货星系',
+        colSellTo: '出货星系',
+        colJumps: '跳数',
+        colRisk: '运输风险',
+        colBuyPrice: '进货价',
+        colSellPrice: '出货价',
+        colNetUnit: '净利/件',
+        colProfitPerM3: '利润/m³',
+        colMaxUnits: '可装件数',
+        colTripCost: '单趟本金',
+        colTripRevenue: '单趟收益',
+        colTripProfit: '单趟利润',
+        colROI: '利润率',
+        colSupply: '卖单库存',
+        colDemand: '买单存量',
+        riskTooltip: '路线经过星系1h内玩家舰船击毁总数',
+        safe: '安全',
+        caution: '注意',
+        danger: '高危',
+        limitBySupply: '受卖单限制',
+        limitByDemand: '受买单限制',
+        limitByCargo: '受货舱限制',
+        limitByCapital: '受本金限制'
+      },
+      en: {
+        paramHeader: '⚙️ Parameters',
+        scopeLabel: '🌌 Region Scope',
+        scopeCore: 'Core Five (Jita, Amarr, Dodixie, Rens, Hek)',
+        scopeExtended: 'Core + Surrounding Regions',
+        scopeCustom: 'Custom',
+        customLabel: '📝 Enter Region IDs (comma separated)',
+        customHint: 'Common: The Forge=10000002, Domain=10000043, Sinq Laison=10000032',
+        capital: 'Capital (ISK)',
+        cargo: 'Cargo (m³)',
+        tax: 'Tax (%)',
+        minSell: 'Min Sell Qty',
+        minBuy: 'Min Buy Qty',
+        maxVol: 'Max Vol (m³)',
+        minProfit: 'Min Net/Unit (M)',
+        scanBtn: '▶ Start Scan',
+        exportBtn: '⬇ Export CSV',
+        statTypes: 'Item Types',
+        statOpps: 'Opportunities',
+        statBest: 'Best Profit',
+        statTime: 'Elapsed',
+        progressHeader: '📡 Scan Progress',
+        resultHeader: '📋 Results',
+        resultHint: 'Click header to sort | Item names in English | Locations in English',
+        tablePlaceholder: 'Ready, click scan to start',
+        colRank: '#',
+        colItem: 'Item',
+        colVol: 'Vol(m³)',
+        colBuyFrom: 'Buy System',
+        colSellTo: 'Sell System',
+        colJumps: 'Jumps',
+        colRisk: 'Risk',
+        colBuyPrice: 'Buy Price',
+        colSellPrice: 'Sell Price',
+        colNetUnit: 'Net/Unit',
+        colProfitPerM3: 'ISK/m³',
+        colMaxUnits: 'Max Units',
+        colTripCost: 'Trip Cost',
+        colTripRevenue: 'Trip Revenue',
+        colTripProfit: 'Trip Profit',
+        colROI: 'ROI',
+        colSupply: 'Supply',
+        colDemand: 'Demand',
+        riskTooltip: 'Total player ship kills in route systems (1h)',
+        safe: 'Safe',
+        caution: 'Caution',
+        danger: 'Danger',
+        limitBySupply: 'Limited by supply',
+        limitByDemand: 'Limited by demand',
+        limitByCargo: 'Limited by cargo',
+        limitByCapital: 'Limited by capital'
+      }
+    };
+
+    const CORE_REGIONS = {
+      Jita: 10000002, Amarr: 10000043, Dodixie: 10000032, Rens: 10000030, Hek: 10000042
+    };
+    
+    const EXTENDED_REGIONS = {
+      10000002: { neighbors: [10000016, 10000033, 10000069] },
+      10000043: { neighbors: [10000020, 10000052, 10000067] },
+      10000032: { neighbors: [10000037, 10000064, 10000068] },
+      10000030: { neighbors: [10000028, 10000041] },
+      10000042: { neighbors: [10000028, 10000041] }
+    };
+
+    let regionIdToName = {
+      10000002: "The Forge", 10000043: "Domain", 10000032: "Sinq Laison", 
+      10000030: "Heimatar", 10000042: "Metropolis",
+      10000016: "Lonetrek", 10000033: "The Citadel", 10000069: "Black Rise",
+      10000020: "Tash-Murkon", 10000052: "Khanid", 10000067: "Genesis",
+      10000037: "Everyshore", 10000064: "Essence", 10000068: "Verge Vendor",
+      10000028: "Molden Heath", 10000041: "Derelik"
+    };
+
+    let systemToRegion = {};
+    let systemNameMap = {};
+    let allResults = [];
+    let sortKey = "tripProfit";
+    let sortAsc = false;
+    const killCache = {};
+
+    const $ = id => document.getElementById(id);
+    const fmtM = (n, d=2) => n==null ? "—" : (n/1e6).toFixed(d) + "M";
+    const fmtN = n => n==null ? "—" : Math.round(n).toLocaleString();
+
+    window.setLanguage = function(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === (lang === 'zh' ? '中文' : 'English'));
+      });
+      updateUIText();
+      renderTable();
+    };
+
+    function updateUIText() {
+      const t = i18n[currentLang];
+      $('param-header').textContent = t.paramHeader;
+      $('scope-label').textContent = t.scopeLabel;
+      $('scope-core').textContent = t.scopeCore;
+      $('scope-extended').textContent = t.scopeExtended;
+      $('scope-custom').textContent = t.scopeCustom;
+      $('custom-label').textContent = t.customLabel;
+      $('custom-hint').textContent = t.customHint;
+      $('lbl-capital').textContent = t.capital;
+      $('lbl-cargo').textContent = t.cargo;
+      $('lbl-tax').textContent = t.tax;
+      $('lbl-minSell').textContent = t.minSell;
+      $('lbl-minBuy').textContent = t.minBuy;
+      $('lbl-maxVol').textContent = t.maxVol;
+      $('lbl-minProfit').textContent = t.minProfit;
+      $('scan-btn').innerHTML = t.scanBtn;
+      $('stat-types').textContent = t.statTypes;
+      $('stat-opps').textContent = t.statOpps;
+      $('stat-best').textContent = t.statBest;
+      $('stat-time').textContent = t.statTime;
+      $('progress-header').textContent = t.progressHeader;
+      $('result-header').textContent = t.resultHeader;
+      $('result-hint').textContent = t.resultHint;
+      $('table-placeholder').textContent = t.tablePlaceholder;
+      document.querySelectorAll('.btn').forEach(btn => {
+        if (btn.textContent.includes('导出') || btn.textContent.includes('Export')) {
+          btn.innerHTML = t.exportBtn;
+        }
+      });
+    }
+
+    window.toggleCustomInput = function() {
+      $('customRegionsBox').style.display = $('scopeSelect').value === 'custom' ? 'block' : 'none';
+    };
+
+    function getSelectedRegions() {
+      const scope = $('scopeSelect').value;
+      if (scope === 'core') {
+        return Object.entries(CORE_REGIONS).map(([name, id]) => ({ id, name: regionIdToName[id] || name }));
+      } else if (scope === 'extended') {
+        const regionSet = new Set(Object.values(CORE_REGIONS));
+        Object.values(EXTENDED_REGIONS).forEach(v => v.neighbors.forEach(n => regionSet.add(n)));
+        return Array.from(regionSet).map(id => ({ id, name: regionIdToName[id] || `Region ${id}` }));
+      } else {
+        const ids = $('customRegionIds').value.split(',').map(s => parseInt(s.trim())).filter(id => !isNaN(id) && id > 0);
+        return ids.map(id => ({ id, name: regionIdToName[id] || `Region ${id}` }));
+      }
+    }
+
+    window.copySystem = function(name) {
+      navigator.clipboard?.writeText(name).then(() => {
+        alert(`📋 ${name} copied to clipboard`);
+      }).catch(() => alert('Copy failed'));
+    };
+
+    async function loadSystemMappings(regionIds) {
+      for (const rid of regionIds) {
+        try {
+          const resp = await fetch(`https://esi.evetech.net/latest/universe/regions/${rid}/`);
+          if (resp.ok) {
+            const data = await resp.json();
+            regionIdToName[rid] = data.name;
+            for (const cid of data.constellations) {
+              const cResp = await fetch(`https://esi.evetech.net/latest/universe/constellations/${cid}/`);
+              if (cResp.ok) {
+                const cData = await cResp.json();
+                for (const sid of cData.systems) {
+                  systemToRegion[sid] = rid;
+                }
+              }
+            }
+          }
+        } catch(e) {}
+      }
+    }
+
+    async function fetchAllOrders(url) {
+      const headers = {"User-Agent": "EVE-ArbScan-Pro"};
+      const r = await fetch(url, {headers});
+      if(!r.ok) return [];
+      const pages = parseInt(r.headers.get("X-Pages")||"1");
+      let data = await r.json();
+      if(pages===1) return data;
+      const B = 5;
+      for(let p=2; p<=pages; p+=B) {
+        const chunk = Array.from({length: Math.min(B, pages-p+1)}, (_,i)=>
+          fetch(url.replace("page=1", `page=${p+i}`), {headers}).then(x=>x.ok?x.json():[]).catch(()=>[])
+        );
+        for(const page of await Promise.all(chunk)) data = data.concat(page);
+      }
+      return data;
+    }
+
+    async function getTypeInfo(ids) {
+      const map = {};
+      const B = 20;
+      for(let i=0; i<ids.length; i+=B) {
+        await Promise.all(ids.slice(i,i+B).map(id=>
+          fetch(`https://esi.evetech.net/latest/universe/types/${id}/?language=en`, {
+            headers: {"Accept-Language": "en", "User-Agent": "EVE-ArbScan-Pro"}
+          })
+          .then(r=> r.ok? r.json():null)
+          .then(d=> { if(d) map[id] = {name: d.name, vol: d.packaged_volume ?? d.volume ?? 9999}; })
+        ));
+      }
+      return map;
+    }
+
+    async function fetchRouteKills(systemIds) {
+      if (!systemIds.length) return 0;
+      const key = systemIds.sort().join(',');
+      if (killCache[key] !== undefined) return killCache[key];
+      
+      let total = 0;
+      for (let i=0; i<systemIds.length; i+=5) {
+        const batch = systemIds.slice(i, i+5);
+        await Promise.all(batch.map(async sid => {
+          try {
+            const r = await fetch(`https://zkillboard.com/api/kills/solarSystemID/${sid}/pastSeconds/3600/`, {
+              headers: {"User-Agent": "EVE-ArbScan-Pro"}
+            });
+            if (r.ok) {
+              const d = await r.json();
+              total += Array.isArray(d) ? d.length : 0;
+            }
+          } catch(e) {}
+        }));
+      }
+      killCache[key] = total;
+      return total;
+    }
+
+    function renderTable() {
+      const data = [...allResults].sort((a,b) => {
+        const av = a[sortKey], bv = b[sortKey];
+        return sortAsc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+      }).slice(0, 30);
+      
+      const t = i18n[currentLang];
+      
+      let html = `<table><thead><tr>`;
+      const columns = [
+        {k:'_rank', label: t.colRank},
+        {k:'name', label: t.colItem, align: 'left'},
+        {k:'vol', label: t.colVol},
+        {k:'buySystemFull', label: t.colBuyFrom},
+        {k:'sellSystemFull', label: t.colSellTo},
+        {k:'jumps', label: t.colJumps},
+        {k:'routeKills', label: t.colRisk, tooltip: t.riskTooltip},
+        {k:'buyPrice', label: t.colBuyPrice},
+        {k:'sellPrice', label: t.colSellPrice},
+        {k:'netPerUnit', label: t.colNetUnit},
+        {k:'profitPerM3', label: t.colProfitPerM3},
+        {k:'maxUnits', label: t.colMaxUnits},
+        {k:'tripCost', label: t.colTripCost},
+        {k:'tripRevenue', label: t.colTripRevenue},
+        {k:'tripProfit', label: t.colTripProfit},
+        {k:'tripROI', label: t.colROI},
+        {k:'buyQtyAvailable', label: t.colSupply},
+        {k:'sellQtyAvailable', label: t.colDemand}
+      ];
+      
+      columns.forEach(c => {
+        const tooltip = c.tooltip ? `title="${c.tooltip}"` : '';
+        html += `<th onclick="window.srt('${c.k}')" ${tooltip}>${c.label}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+      
+      if(!data.length) {
+        html += `<tr><td colspan="${columns.length}" style="text-align:center;padding:50px;">${t.tablePlaceholder}</td></tr>`;
+      } else {
+        data.forEach((o, i) => {
+          html += '<tr>';
+          
+          html += `<td style="color:var(--gold);font-weight:600;">${i+1}</td>`;
+          html += `<td class="item-name" style="text-align:left;">${o.name || '—'}</td>`;
+          html += `<td>${o.vol?.toFixed(2) || '—'}</td>`;
+          
+          const buyFull = `${o.buySystemName || '?'} · ${o.buyRegionName || '?'}`;
+          html += `<td><span class="location-tag" onclick="copySystem('${o.buySystemName}')">${buyFull}</span></td>`;
+          
+          const sellFull = `${o.sellSystemName || '?'} · ${o.sellRegionName || '?'}`;
+          html += `<td><span class="location-tag" onclick="copySystem('${o.sellSystemName}')">${sellFull}</span></td>`;
+          
+          html += `<td>${o.jumps || '?'}</td>`;
+          
+          // 统一的风险标签样式
+          const kills = o.routeKills || 0;
+          let riskHtml = '';
+          if (kills === 0) riskHtml = `<span class="risk-safe">${t.safe}</span>`;
+          else if (kills <= 20) riskHtml = `<span class="risk-caution">${t.caution} (${kills})</span>`;
+          else riskHtml = `<span class="risk-danger">${t.danger} (${kills})</span>`;
+          html += `<td title="${t.riskTooltip}">${riskHtml}</td>`;
+          
+          html += `<td>${fmtM(o.buyPrice)}</td>`;
+          html += `<td>${fmtM(o.sellPrice)}</td>`;
+          html += `<td class="profit-positive">${fmtM(o.netPerUnit)}</td>`;
+          html += `<td>${fmtM(o.profitPerM3, 2)}</td>`;
+          
+          // 显示可装件数及限制原因
+          let limitHint = '';
+          if (o.limitingFactor) {
+            const limitMap = {
+              'supply': t.limitBySupply,
+              'demand': t.limitByDemand,
+              'cargo': t.limitByCargo,
+              'capital': t.limitByCapital
+            };
+            limitHint = `<span class="limit-indicator" title="${limitMap[o.limitingFactor]}">⚠</span>`;
+          }
+          html += `<td>${fmtN(o.maxUnits)}${limitHint}</td>`;
+          
+          html += `<td>${fmtM(o.tripCost, 1)}</td>`;
+          html += `<td>${fmtM(o.tripRevenue, 1)}</td>`;
+          html += `<td class="profit-positive" style="font-weight:700;">${fmtM(o.tripProfit, 1)}</td>`;
+          html += `<td>${o.tripROI?.toFixed(1) || '—'}%</td>`;
+          html += `<td>${fmtN(o.buyQtyAvailable)}</td>`;
+          html += `<td>${fmtN(o.sellQtyAvailable)}</td>`;
+          
+          html += '</tr>';
+        });
+      }
+      html += '</tbody></table>';
+      $('twrap').innerHTML = html;
+    }
+
+    window.srt = function(k) {
+      if(sortKey === k) sortAsc = !sortAsc; 
+      else { sortKey = k; sortAsc = false; }
+      renderTable();
+    };
+
+    window.exportCSV = function() {
+      if(!allResults.length) { alert('No data'); return; }
+      const headers = ['Rank','Item','Vol','Buy System','Sell System','Jumps','Risk(Kills)','Buy Price','Sell Price','Net/Unit','ISK/m³','Max Units','Trip Cost','Trip Revenue','Trip Profit','ROI%','Supply','Demand'];
+      const rows = allResults.map((o,i) => [
+        i+1, o.name, o.vol?.toFixed(2), `${o.buySystemName} · ${o.buyRegionName}`, `${o.sellSystemName} · ${o.sellRegionName}`,
+        o.jumps, o.routeKills, o.buyPrice, o.sellPrice, o.netPerUnit, o.profitPerM3, o.maxUnits,
+        o.tripCost, o.tripRevenue, o.tripProfit, o.tripROI?.toFixed(1), o.buyQtyAvailable, o.sellQtyAvailable
+      ].join(','));
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob(["\uFEFF"+csv], {type:'text/csv'});
+      const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='eve_arbitrage.csv';
+      a.click();
+    };
+
+    window.startScan = async function() {
+      const capital = parseFloat($('capital').value)||1.2e9;
+      const cargo = parseFloat($('cargo').value)||10000;
+      const taxRate = parseFloat($('tax').value)/100;
+      const minSellQty = +$('minSell').value||5;
+      const minBuyQty = +$('minBuy').value||5;
+      const maxVol = parseFloat($('maxvol').value)||100;
+      const minNetISK = (parseFloat($('minprofit').value)||0)*1e6;
+
+      const btn = $('scan-btn'); 
+      btn.disabled = true; 
+      btn.textContent = currentLang === 'zh' ? '扫描中...' : 'Scanning...';
+      $('pgwrap').style.display='block'; 
+      $('lgbox').innerHTML='';
+      ['sv-types','sv-opps','sv-best','sv-time'].forEach(id=>$(id).textContent='—');
+      $('twrap').innerHTML = `<div style="text-align:center;padding:60px;">${currentLang==='zh'?'⏳ 加载数据...':'⏳ Loading...'}</div>`;
+      
+      const t0 = Date.now();
+      
+      try {
+        const regions = getSelectedRegions();
+        $('lgbox').innerHTML = `📌 ${regions.length} regions to scan...<br>`;
+        
+        await loadSystemMappings(regions.map(r=>r.id));
+        
+        $('pgmsg').textContent = currentLang === 'zh' ? '获取市场订单...' : 'Fetching market orders...';
+        const regionOrders = await Promise.all(regions.map(async r => {
+          $('lgbox').innerHTML += `▸ ${r.name} ...<br>`;
+          const orders = await fetchAllOrders(`https://esi.evetech.net/latest/markets/${r.id}/orders/?order_type=all&page=1`);
+          return { regionId: r.id, regionName: r.name, orders };
+        }));
+        
+        // 构建星系价格映射 - 正确取最低卖价和最高买价
+        const sysPriceMap = {};
+        const sysIdsSet = new Set();
+        
+        for (const ro of regionOrders) {
+          for (const o of ro.orders) {
+            const tid = o.type_id;
+            const sid = o.system_id;
+            sysIdsSet.add(sid);
+            
+            if (!sysPriceMap[tid]) sysPriceMap[tid] = {};
+            if (!sysPriceMap[tid][sid]) {
+              sysPriceMap[tid][sid] = {
+                sell: Infinity,  // 最低卖价
+                sellQty: 0, 
+                buy: 0,          // 最高买价
+                buyQty: 0
+              };
+            }
+            
+            const rec = sysPriceMap[tid][sid];
+            if (o.is_buy_order) {
+              // 买单：取最高价，累加同价数量
+              if (o.price > rec.buy) {
+                rec.buy = o.price;
+                rec.buyQty = o.volume_remain;
+              } else if (o.price === rec.buy) {
+                rec.buyQty += o.volume_remain;
+              }
+            } else {
+              // 卖单：取最低价，累加同价数量
+              if (o.price < rec.sell) {
+                rec.sell = o.price;
+                rec.sellQty = o.volume_remain;
+              } else if (o.price === rec.sell) {
+                rec.sellQty += o.volume_remain;
+              }
+            }
+          }
+        }
+        
+        $('sv-types').textContent = Object.keys(sysPriceMap).length;
+        
+        // 获取星系名称
+        const sysArray = Array.from(sysIdsSet);
+        for (let i=0; i<sysArray.length; i+=30) {
+          await Promise.all(sysArray.slice(i,i+30).map(async sid => {
+            if (!systemNameMap[sid]) {
+              try {
+                const r = await fetch(`https://esi.evetech.net/latest/universe/systems/${sid}/`);
+                if (r.ok) { const d = await r.json(); systemNameMap[sid] = d.name; }
+              } catch(e) {}
+            }
+          }));
+        }
+        
+        // 寻找机会
+        const opps = [];
+        for (const [tid, sysMap] of Object.entries(sysPriceMap)) {
+          const systems = Object.keys(sysMap);
+          for (const buySys of systems) {
+            const buyData = sysMap[buySys];
+            if (!isFinite(buyData.sell) || buyData.sell <= 0 || buyData.sellQty < minSellQty) continue;
+            
+            for (const sellSys of systems) {
+              if (buySys === sellSys) continue;
+              const sellData = sysMap[sellSys];
+              if (sellData.buy <= 0 || sellData.buyQty < minBuyQty) continue;
+              
+              const netUnit = sellData.buy * (1 - taxRate) - buyData.sell;
+              if (netUnit < minNetISK) continue;
+              
+              opps.push({
+                typeId: +tid,
+                buySystemId: +buySys, sellSystemId: +sellSys,
+                buyPrice: buyData.sell, sellPrice: sellData.buy,
+                buyQtyAvailable: buyData.sellQty, sellQtyAvailable: sellData.buyQty,
+                netPerUnit: netUnit
+              });
+            }
+          }
+        }
+        
+        opps.sort((a,b) => b.netPerUnit - a.netPerUnit);
+        const topOpps = opps.slice(0, 200);
+        
+        const typeIds = [...new Set(topOpps.map(o=>o.typeId))];
+        const typeInfo = await getTypeInfo(typeIds);
+        
+        const routeCache = new Map();
+        const results = [];
+        
+        for (const opp of topOpps) {
+          const info = typeInfo[opp.typeId];
+          if (!info || info.vol > maxVol || info.vol <= 0) continue;
+          
+          // 计算可装件数：受货舱、本金、卖单库存、买单库存四重限制
+          const maxByCargo = Math.floor(cargo / info.vol);
+          const maxByCapital = Math.floor(capital / opp.buyPrice);
+          const maxBySupply = opp.buyQtyAvailable;
+          const maxByDemand = opp.sellQtyAvailable;
+          
+          const maxUnits = Math.min(maxByCargo, maxByCapital, maxBySupply, maxByDemand);
+          if (maxUnits <= 0) continue;
+          
+          // 确定限制因素
+          let limitingFactor = null;
+          if (maxUnits === maxBySupply) limitingFactor = 'supply';
+          else if (maxUnits === maxByDemand) limitingFactor = 'demand';
+          else if (maxUnits === maxByCargo) limitingFactor = 'cargo';
+          else if (maxUnits === maxByCapital) limitingFactor = 'capital';
+          
+          let jumps = 999, routeSystems = [];
+          const routeKey = `${opp.buySystemId}|${opp.sellSystemId}`;
+          if (routeCache.has(routeKey)) {
+            const c = routeCache.get(routeKey);
+            jumps = c.jumps; routeSystems = c.systems;
+          } else {
+            try {
+              const r = await fetch(`https://esi.evetech.net/latest/route/${opp.buySystemId}/${opp.sellSystemId}/`);
+              if (r.ok) { routeSystems = await r.json(); jumps = routeSystems.length - 1; }
+            } catch(e) {}
+            routeCache.set(routeKey, {jumps, systems: routeSystems});
+          }
+          
+          const kills = await fetchRouteKills(routeSystems);
+          
+          const tripCost = opp.buyPrice * maxUnits;
+          const tripRevenue = opp.sellPrice * maxUnits * (1 - taxRate);
+          const tripProfit = tripRevenue - tripCost;
+          
+          results.push({
+            ...opp,
+            name: info.name,
+            vol: info.vol,
+            maxUnits,
+            limitingFactor,
+            jumps,
+            routeKills: kills,
+            tripCost, tripRevenue, tripProfit,
+            tripROI: (tripProfit / tripCost) * 100,
+            profitPerM3: opp.netPerUnit / info.vol,
+            buySystemName: systemNameMap[opp.buySystemId] || `Sys ${opp.buySystemId}`,
+            sellSystemName: systemNameMap[opp.sellSystemId] || `Sys ${opp.sellSystemId}`,
+            buyRegionName: regionIdToName[systemToRegion[opp.buySystemId]] || '?',
+            sellRegionName: regionIdToName[systemToRegion[opp.sellSystemId]] || '?'
+          });
+        }
+        
+        allResults = results.sort((a,b) => b.tripProfit - a.tripProfit);
+        
+        const elapsed = ((Date.now()-t0)/1000).toFixed(1);
+        $('sv-opps').textContent = allResults.length;
+        $('sv-best').textContent = allResults.length ? fmtM(allResults[0].tripProfit, 1) : '—';
+        $('sv-time').textContent = elapsed + 's';
+        
+        renderTable();
+        $('pgwrap').style.display = 'none';
+        
+      } catch(e) {
+        console.error(e);
+        $('lgbox').innerHTML += `<span style="color:#e06b6b">Error: ${e.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = currentLang === 'zh' ? '▶ 开始扫描' : '▶ Start Scan';
+      }
+    };
+
+    window.onload = () => {
+      setLanguage('zh');
+      toggleCustomInput();
+      renderTable();
+    };
+  })();
+</script>
+</body>
+</html>
