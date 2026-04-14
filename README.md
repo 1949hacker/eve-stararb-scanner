@@ -1,5 +1,7 @@
 # eve-stararb-scanner
 
+[https://eve.hackerbs.com](https://eve.hackerbs.com)
+
 🚀 EVE 星域套利扫描器 | 纯前端网页神器 🌌
 实时扫描五大贸易枢纽 + 完全自定义星域 · ESI 市场订单秒级分析 · zKillboard 1小时运输风险评估 · 一键计算单趟利润、ROI、货舱容积与本金限制
 无需登录 · 无需安装 · 浏览器直接跑 · 帮你高效跨星域搬砖赚钱！
