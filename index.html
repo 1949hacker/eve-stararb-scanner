@@ -640,7 +640,7 @@
     async function loadSystemMappings(regionIds) {
       for (const rid of regionIds) {
         try {
-          const resp = await fetch(`https://esi.evetech.net/latest/universe/regions/${rid}/`);
+          const resp = await fetch(`https://esi.evetech.net/latest/universe/regions/${rid}/?language=en`);
           if (resp.ok) {
             const data = await resp.json();
             regionIdToName[rid] = data.name;
@@ -909,7 +909,7 @@
           await Promise.all(sysArray.slice(i,i+30).map(async sid => {
             if (!systemNameMap[sid]) {
               try {
-                const r = await fetch(`https://esi.evetech.net/latest/universe/systems/${sid}/`);
+                const r = await fetch(`https://esi.evetech.net/latest/universe/systems/${sid}/?language=en`);
                 if (r.ok) { const d = await r.json(); systemNameMap[sid] = d.name; }
               } catch(e) {}
             }
